@@ -239,22 +239,19 @@ def mcp_server():
     from sse_starlette.sse import EventSourceResponse
 
     async def handle_sse(request):
-        import asyncio
-
-        async def event_generator():
-            # Correct SSE transport: send the POST endpoint path, not a JSON-RPC message
-            yield {"event": "endpoint", "data": "/"}
-            # Keep connection alive so client can POST and receive responses
-            while True:
-                await asyncio.sleep(15)
-                yield {"event": "ping", "data": ""}
-
-        return EventSourceResponse(event_generator())
+        # Streamable HTTP transport (2025-03-26) does not use persistent SSE for transport.
+        # Return 405 so clients fall back to POST-based transport immediately.
+        from starlette.responses import Response
+        return Response(status_code=405)
 
     def format_duration(seconds: float) -> str:
         minutes = int(seconds // 60)
         secs = int(seconds % 60)
         return f"{minutes}:{secs:02d}"
+
+    async def handle_mcp_get(request):
+        # Streamable HTTP: GET returns 200 to confirm endpoint is alive
+        return JSONResponse({"status": "ok", "protocol": "MCP Streamable HTTP 2025-03-26"})
 
     async def handle_mcp(request):
         body = await request.json()
@@ -267,7 +264,7 @@ def mcp_server():
                 "jsonrpc": "2.0",
                 "id": request_id,
                 "result": {
-                    "protocolVersion": "2024-11-05",
+                    "protocolVersion": "2025-03-26",
                     "capabilities": {"tools": {}},
                     "serverInfo": {"name": "video-watch", "version": "2.0.0"}
                 }
@@ -416,6 +413,7 @@ def mcp_server():
 
     routes = [
         Route("/", handle_mcp, methods=["POST"]),
+        Route("/", handle_mcp_get, methods=["GET"]),
         Route("/sse", handle_sse),
         Route("/health", health),
     ]
