@@ -181,7 +181,10 @@ def process_see(url: str, max_frames: int = 5):
             return {"success": False, "error": dl["error"]}
 
         duration = get_duration(video_path)
-        frames = extract_frames(video_path, frames_dir, fps=0.5, max_frames=max_frames)
+        try:
+            frames = extract_frames(video_path, frames_dir, fps=0.5, max_frames=max_frames)
+        except Exception as e:
+            return {"success": False, "error": f"Frame extraction failed: {e}"}
 
         return {
             "success": True,
@@ -206,7 +209,10 @@ def process_watch(url: str, max_frames: int = 5):
             return {"success": False, "error": dl["error"]}
 
         duration = get_duration(video_path)
-        frames = extract_frames(video_path, frames_dir, fps=0.5, max_frames=max_frames)
+        try:
+            frames = extract_frames(video_path, frames_dir, fps=0.5, max_frames=max_frames)
+        except Exception as e:
+            return {"success": False, "error": f"Frame extraction failed: {e}"}
 
         try:
             transcript = transcribe_audio(video_path, audio_path)
@@ -233,14 +239,16 @@ def mcp_server():
     from sse_starlette.sse import EventSourceResponse
 
     async def handle_sse(request):
+        import asyncio
+
         async def event_generator():
-            yield {
-                "event": "endpoint",
-                "data": json.dumps({
-                    "jsonrpc": "2.0",
-                    "method": "notifications/initialized"
-                })
-            }
+            # Correct SSE transport: send the POST endpoint path, not a JSON-RPC message
+            yield {"event": "endpoint", "data": "/"}
+            # Keep connection alive so client can POST and receive responses
+            while True:
+                await asyncio.sleep(15)
+                yield {"event": "ping", "data": ""}
+
         return EventSourceResponse(event_generator())
 
     def format_duration(seconds: float) -> str:
@@ -323,63 +331,72 @@ def mcp_server():
                 })
 
             # Route to appropriate processor
-            if tool_name == "video_listen":
-                result = process_listen.remote(url)
+            try:
+                if tool_name == "video_listen":
+                    result = process_listen.remote(url)
 
-                if not result.get("success"):
+                    if not result.get("success"):
+                        return JSONResponse({
+                            "jsonrpc": "2.0",
+                            "id": request_id,
+                            "result": {"content": [{"type": "text", "text": f"Error: {result.get('error')}"}]}
+                        })
+
+                    content = [{
+                        "type": "text",
+                        "text": f"**Video:** {url}\n**Duration:** {format_duration(result.get('duration_seconds', 0))}\n\n**Transcript:**\n{result.get('transcript', '[No transcript]')}"
+                    }]
+
+                elif tool_name == "video_see":
+                    max_frames = min(args.get("max_frames", 5), 10)
+                    result = process_see.remote(url, max_frames)
+
+                    if not result.get("success"):
+                        return JSONResponse({
+                            "jsonrpc": "2.0",
+                            "id": request_id,
+                            "result": {"content": [{"type": "text", "text": f"Error: {result.get('error')}"}]}
+                        })
+
+                    content = [{
+                        "type": "text",
+                        "text": f"**Video:** {url}\n**Duration:** {format_duration(result.get('duration_seconds', 0))}\n**Frames:** {result.get('frame_count', 0)}"
+                    }]
+
+                    for frame_b64 in result.get("frames", []):
+                        content.append({"type": "image", "data": frame_b64, "mimeType": "image/jpeg"})
+
+                elif tool_name == "watch_video":
+                    max_frames = min(args.get("max_frames", 5), 10)
+                    result = process_watch.remote(url, max_frames)
+
+                    if not result.get("success"):
+                        return JSONResponse({
+                            "jsonrpc": "2.0",
+                            "id": request_id,
+                            "result": {"content": [{"type": "text", "text": f"Error: {result.get('error')}"}]}
+                        })
+
+                    content = [{
+                        "type": "text",
+                        "text": f"**Video:** {url}\n**Duration:** {format_duration(result.get('duration_seconds', 0))}\n**Frames:** {result.get('frame_count', 0)}\n\n**Transcript:**\n{result.get('transcript', '[No transcript]')}"
+                    }]
+
+                    for frame_b64 in result.get("frames", []):
+                        content.append({"type": "image", "data": frame_b64, "mimeType": "image/jpeg"})
+
+                else:
                     return JSONResponse({
                         "jsonrpc": "2.0",
                         "id": request_id,
-                        "result": {"content": [{"type": "text", "text": f"Error: {result.get('error')}"}]}
+                        "error": {"code": -32601, "message": f"Unknown tool: {tool_name}"}
                     })
 
-                content = [{
-                    "type": "text",
-                    "text": f"**Video:** {url}\n**Duration:** {format_duration(result.get('duration_seconds', 0))}\n\n**Transcript:**\n{result.get('transcript', '[No transcript]')}"
-                }]
-
-            elif tool_name == "video_see":
-                max_frames = min(args.get("max_frames", 5), 10)
-                result = process_see.remote(url, max_frames)
-
-                if not result.get("success"):
-                    return JSONResponse({
-                        "jsonrpc": "2.0",
-                        "id": request_id,
-                        "result": {"content": [{"type": "text", "text": f"Error: {result.get('error')}"}]}
-                    })
-
-                content = [{
-                    "type": "text",
-                    "text": f"**Video:** {url}\n**Duration:** {format_duration(result.get('duration_seconds', 0))}\n**Frames:** {result.get('frame_count', 0)}"
-                }]
-
-                for frame_b64 in result.get("frames", []):
-                    content.append({"type": "image", "data": frame_b64, "mimeType": "image/jpeg"})
-
-            elif tool_name == "watch_video":
-                max_frames = min(args.get("max_frames", 5), 10)
-                result = process_watch.remote(url, max_frames)
-
-                if not result.get("success"):
-                    return JSONResponse({
-                        "jsonrpc": "2.0",
-                        "id": request_id,
-                        "result": {"content": [{"type": "text", "text": f"Error: {result.get('error')}"}]}
-                    })
-
-                content = [{
-                    "type": "text",
-                    "text": f"**Video:** {url}\n**Duration:** {format_duration(result.get('duration_seconds', 0))}\n**Frames:** {result.get('frame_count', 0)}\n\n**Transcript:**\n{result.get('transcript', '[No transcript]')}"
-                }]
-
-                for frame_b64 in result.get("frames", []):
-                    content.append({"type": "image", "data": frame_b64, "mimeType": "image/jpeg"})
-            else:
+            except Exception as e:
                 return JSONResponse({
                     "jsonrpc": "2.0",
                     "id": request_id,
-                    "error": {"code": -32601, "message": f"Unknown tool: {tool_name}"}
+                    "result": {"content": [{"type": "text", "text": f"Error processing video: {e}"}]}
                 })
 
             return JSONResponse({
