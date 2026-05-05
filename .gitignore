@@ -23,3 +23,8 @@ mcp-server/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node.js
+node_modules/
+build/
+.env
