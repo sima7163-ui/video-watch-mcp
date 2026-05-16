@@ -125,47 +125,72 @@ def extract_frames(video_path: str, output_dir: str, fps: float = 0.5, max_frame
     return frames_b64
 
 
-def transcribe_audio(video_path: str, audio_path: str) -> str:
-    """Extract and transcribe audio."""
-    import whisper
 
-    # Extract audio
+def transcribe_with_model(whisper_model, video_path: str, audio_path: str) -> str:
+    """Transcribe using a pre-loaded whisper model."""
     subprocess.run([
         "ffmpeg", "-i", video_path,
         "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1",
         audio_path
     ], capture_output=True, check=True)
-
-    # Transcribe
-    model = whisper.load_model("base")
-    result = model.transcribe(audio_path)
+    result = whisper_model.transcribe(audio_path)
     return result["text"]
 
 
-@app.function(gpu="T4", timeout=300)
-def process_listen(url: str):
-    """Audio/transcript only - lightweight."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        video_path = f"{tmpdir}/video.mp4"
-        audio_path = f"{tmpdir}/audio.wav"
+@app.cls(gpu="T4", timeout=300)
+class TranscribeWorker:
+    """Loads whisper model once per container lifetime — avoids per-call cold load."""
 
-        dl = download_video(url, video_path)
-        if not dl["success"]:
-            return {"success": False, "error": dl["error"]}
+    @modal.enter()
+    def load_model(self):
+        import whisper
+        self.model = whisper.load_model("base")
 
-        duration = get_duration(video_path)
+    @modal.method()
+    def listen(self, url: str):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            video_path = f"{tmpdir}/video.mp4"
+            audio_path = f"{tmpdir}/audio.wav"
 
-        try:
-            transcript = transcribe_audio(video_path, audio_path)
-        except Exception as e:
-            transcript = f"[Transcription failed: {e}]"
+            dl = download_video(url, video_path)
+            if not dl["success"]:
+                return {"success": False, "error": dl["error"]}
 
-        return {
-            "success": True,
-            "duration_seconds": duration,
-            "transcript": transcript,
-            "url": url
-        }
+            duration = get_duration(video_path)
+            try:
+                transcript = transcribe_with_model(self.model, video_path, audio_path)
+            except Exception as e:
+                transcript = f"[Transcription failed: {e}]"
+
+            return {"success": True, "duration_seconds": duration, "transcript": transcript, "url": url}
+
+    @modal.method()
+    def watch(self, url: str, max_frames: int = 5):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            video_path = f"{tmpdir}/video.mp4"
+            audio_path = f"{tmpdir}/audio.wav"
+            frames_dir = f"{tmpdir}/frames"
+            Path(frames_dir).mkdir()
+
+            dl = download_video(url, video_path)
+            if not dl["success"]:
+                return {"success": False, "error": dl["error"]}
+
+            duration = get_duration(video_path)
+            frames = extract_frames(video_path, frames_dir, fps=0.5, max_frames=max_frames)
+            try:
+                transcript = transcribe_with_model(self.model, video_path, audio_path)
+            except Exception as e:
+                transcript = f"[Transcription failed: {e}]"
+
+            return {
+                "success": True,
+                "duration_seconds": duration,
+                "frame_count": len(frames),
+                "frames": frames,
+                "transcript": transcript,
+                "url": url
+            }
 
 
 @app.function(timeout=300)
@@ -192,35 +217,8 @@ def process_see(url: str, max_frames: int = 5):
         }
 
 
-@app.function(gpu="T4", timeout=300)
-def process_watch(url: str, max_frames: int = 5):
-    """Full experience - frames + transcript."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        video_path = f"{tmpdir}/video.mp4"
-        audio_path = f"{tmpdir}/audio.wav"
-        frames_dir = f"{tmpdir}/frames"
-        Path(frames_dir).mkdir()
-
-        dl = download_video(url, video_path)
-        if not dl["success"]:
-            return {"success": False, "error": dl["error"]}
-
-        duration = get_duration(video_path)
-        frames = extract_frames(video_path, frames_dir, fps=0.5, max_frames=max_frames)
-
-        try:
-            transcript = transcribe_audio(video_path, audio_path)
-        except Exception as e:
-            transcript = f"[Transcription failed: {e}]"
-
-        return {
-            "success": True,
-            "duration_seconds": duration,
-            "frame_count": len(frames),
-            "frames": frames,
-            "transcript": transcript,
-            "url": url
-        }
+# Module-level singleton used by the MCP server
+_transcribe_worker = TranscribeWorker()
 
 
 @app.function()
@@ -324,7 +322,7 @@ def mcp_server():
 
             # Route to appropriate processor
             if tool_name == "video_listen":
-                result = process_listen.remote(url)
+                result = _transcribe_worker.listen.remote(url)
 
                 if not result.get("success"):
                     return JSONResponse({
@@ -359,7 +357,7 @@ def mcp_server():
 
             elif tool_name == "watch_video":
                 max_frames = min(args.get("max_frames", 5), 10)
-                result = process_watch.remote(url, max_frames)
+                result = _transcribe_worker.watch.remote(url, max_frames)
 
                 if not result.get("success"):
                     return JSONResponse({
