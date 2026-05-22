@@ -1,5 +1,3 @@
-const API_KEY = 'REPLACE_WITH_SECRET_KEY';
-
 function cors(response) {
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', '*');
@@ -43,7 +41,7 @@ export default {
     // POST /sync — from iOS Shortcut
     if (request.method === 'POST' && url.pathname === '/sync') {
       const authHeader = request.headers.get('Authorization') || '';
-      if (authHeader !== `Bearer ${API_KEY}`) {
+      if (authHeader !== `Bearer ${env.HEALTH_API_KEY}`) {
         return cors(new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }));
       }
       try {
