@@ -151,7 +151,7 @@ export default {
         if (body.method === 'tools/call' && body.params?.name === 'health_check') {
           const days = body.params?.arguments?.days || 1;
           const rows = await env.DB.prepare(
-            'SELECT * FROM health_logs ORDER BY date DESC LIMIT ?'
+            'SELECT * FROM health_logs ORDER BY logged_at DESC LIMIT ?'
           ).bind(days).all();
 
           if (!rows.results.length) {
