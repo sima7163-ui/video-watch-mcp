@@ -90,6 +90,17 @@ export default {
       try {
         const body = await request.json();
 
+        if (body.method === 'initialize') {
+          return cors(new Response(JSON.stringify({
+            jsonrpc: '2.0', id: body.id,
+            result: {
+              protocolVersion: '2024-11-05',
+              capabilities: { tools: {} },
+              serverInfo: { name: 'simi-health-sync', version: '1.0.0' }
+            }
+          }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+        }
+
         if (body.method === 'tools/list') {
           return cors(new Response(JSON.stringify({
             jsonrpc: '2.0', id: body.id,
