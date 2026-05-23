@@ -6,6 +6,33 @@ function cors(response) {
   return new Response(response.body, { status: response.status, headers });
 }
 
+function parseDate(str) {
+  if (!str) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+  const m = String(str).match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+  if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  return null;
+}
+
+function parseSleepMinutes(value) {
+  if (!value && value !== 0) return null;
+  if (typeof value === 'number' && !isNaN(value)) {
+    // If it looks like seconds (> 600), convert to minutes
+    return value > 600 ? Math.round(value / 60) : value;
+  }
+  const s = String(value);
+  // "H:MM" or "HH:MM" format from iOS
+  const hm = s.match(/^(\d+):(\d{2})$/);
+  if (hm) {
+    const h = parseInt(hm[1]), min = parseInt(hm[2]);
+    if (h <= 24) return h * 60 + min;
+    return h; // treat as minutes if hours > 24
+  }
+  const n = parseFloat(s);
+  if (!isNaN(n)) return n > 600 ? Math.round(n / 60) : Math.round(n);
+  return null;
+}
+
 function cyclePhase(dayInCycle, cycleLength = 28) {
   if (dayInCycle <= 5) return 'menstruácia';
   if (dayInCycle <= 13) return 'folikulárna fáza';
@@ -46,16 +73,18 @@ export default {
       }
       try {
         const body = await request.json();
-        const today = body.date || new Date().toISOString().split('T')[0];
+        const today = parseDate(body.date) || new Date().toISOString().split('T')[0];
+        const sleepMinutes = parseSleepMinutes(body.sleep_duration_minutes);
+        const lastPeriodStart = parseDate(body.last_period_start);
 
         let cycleDay = body.cycle_day || null;
         let cycleLength = body.cycle_length_avg || 28;
-        if (!cycleDay && body.last_period_start) {
-          const diff = Math.floor((new Date(today) - new Date(body.last_period_start)) / 86400000);
+        if (!cycleDay && lastPeriodStart) {
+          const diff = Math.floor((new Date(today) - new Date(lastPeriodStart)) / 86400000);
           cycleDay = (diff % cycleLength) + 1;
         }
 
-        const quality = sleepQualityLabel(body.sleep_duration_minutes, body.hrv);
+        const quality = sleepQualityLabel(sleepMinutes, body.hrv);
 
         await env.DB.prepare(`
           INSERT INTO health_logs (date, sleep_duration_minutes, sleep_start, sleep_end, sleep_quality,
@@ -63,21 +92,21 @@ export default {
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           today,
-          body.sleep_duration_minutes || null,
+          sleepMinutes,
           body.sleep_start || null,
           body.sleep_end || null,
           quality,
           cycleDay,
-          body.last_period_start || null,
+          lastPeriodStart,
           cycleLength,
-          body.hrv || null,
-          body.resting_hr || null,
-          body.steps || null,
+          body.hrv ? parseFloat(body.hrv) : null,
+          body.resting_hr ? parseFloat(body.resting_hr) : null,
+          body.steps ? parseInt(body.steps) : null,
           body.active_energy || null,
           body.notes || null
         ).run();
 
-        return cors(new Response(JSON.stringify({ ok: true, date: today, cycle_day: cycleDay, sleep_quality: quality }), {
+        return cors(new Response(JSON.stringify({ ok: true, date: today, cycle_day: cycleDay, sleep_minutes: sleepMinutes, sleep_quality: quality, last_period_start: lastPeriodStart }), {
           status: 200, headers: { 'Content-Type': 'application/json' }
         }));
       } catch (e) {
