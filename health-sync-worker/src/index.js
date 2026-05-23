@@ -86,10 +86,12 @@ export default {
 
         const quality = sleepQualityLabel(sleepMinutes, body.hrv);
 
+        const wristTemp = body.wrist_temperature ? parseFloat(body.wrist_temperature) : null;
+
         await env.DB.prepare(`
           INSERT INTO health_logs (date, sleep_duration_minutes, sleep_start, sleep_end, sleep_quality,
-            cycle_day, last_period_start, cycle_length_avg, hrv, resting_hr, steps, active_energy, notes)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            cycle_day, last_period_start, cycle_length_avg, hrv, resting_hr, steps, active_energy, wrist_temperature, notes)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           today,
           sleepMinutes,
@@ -103,6 +105,7 @@ export default {
           body.resting_hr ? parseFloat(body.resting_hr) : null,
           body.steps ? parseInt(body.steps) : null,
           body.active_energy || null,
+          wristTemp,
           body.notes || null
         ).run();
 
@@ -173,7 +176,8 @@ export default {
             if (r.cycle_day) parts.push(`Cyklus: deň ${r.cycle_day} — ${phase}`);
             if (risk) parts.push(`Riziko bolesti hlavy: ${risk}`);
             if (r.hrv) parts.push(`HRV: ${r.hrv}`);
-            if (r.resting_hr) parts.push(`Pokojový tep: ${r.resting_hr}`);
+            if (r.resting_hr) parts.push(`Pokojový tep: ${r.resting_hr} BPM`);
+            if (r.wrist_temperature) parts.push(`Teplota zápästia: ${r.wrist_temperature > 0 ? '+' : ''}${r.wrist_temperature}°C`);
             if (r.steps) parts.push(`Kroky: ${r.steps}`);
             return parts.join('\n');
           });
