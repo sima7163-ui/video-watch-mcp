@@ -15,10 +15,6 @@
     --ink-dim:#a7a4c4;
     --gold:#e9c98a;
     --violet:#b79bff;
-    --scale-a:#1b2a52;
-    --scale-b:#2f4a86;
-    --wing-a:#5b3b8c;
-    --wing-b:#c15fae;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -51,7 +47,7 @@
     background:
       radial-gradient(circle at 50% 18%, rgba(223,233,255,0.55), rgba(223,233,255,0.08) 22%, transparent 40%),
       linear-gradient(180deg,#0b0f22 0%, #141a3a 45%, #1b1430 100%);
-    height:340px;
+    height:380px;
   }
   .scene .moon{
     position:absolute; top:-70px; left:50%; transform:translateX(-50%);
@@ -73,21 +69,43 @@
   }
   .dragon-wrap{
     position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center;
-    padding-bottom:8px;
+    padding-bottom:14px;
+  }
+  .dragon-inner{ animation:idle 6s ease-in-out infinite; }
+  @keyframes idle{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-7px);} }
+  .dragon-wrap.react .dragon-inner{ animation:react .7s ease; }
+  @keyframes react{
+    0%{transform:scale(1) translateY(0);}
+    35%{transform:scale(1.05) translateY(-12px);}
+    70%{transform:scale(0.99) translateY(0);}
+    100%{transform:scale(1) translateY(0);}
   }
   .dragon-art{
-    width:230px; height:230px;
-    filter:drop-shadow(0 10px 18px rgba(0,0,0,0.5));
+    width:270px; height:290px;
+    filter:drop-shadow(0 12px 20px rgba(0,0,0,0.55));
     transition:filter .6s ease;
   }
-  .eyes-halflid .eye{ transform:scaleY(0.32); transform-box:fill-box; transform-origin:center; }
+  .eyes-halflid .eye-glow{ opacity:0.35; }
+  .eyes-halflid .eye{ transform:scaleY(0.4); transform-box:fill-box; transform-origin:center; }
 
   /* mood tints */
-  .mood-warm .dragon-art{ filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)) saturate(1.15) brightness(1.05); }
-  .mood-neutral .dragon-art{ filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)) saturate(0.95); }
-  .mood-cool .dragon-art{ filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)) saturate(0.6) brightness(0.92) hue-rotate(-6deg); }
-  .mood-distant .dragon-art{ filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)) saturate(0.4) brightness(0.82) hue-rotate(-12deg); }
-  .mood-hurt .dragon-art{ filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)) saturate(0.22) brightness(0.72) hue-rotate(-18deg); }
+  .mood-warm .dragon-art{ filter:drop-shadow(0 12px 20px rgba(0,0,0,.55)) saturate(1.15) brightness(1.06); }
+  .mood-neutral .dragon-art{ filter:drop-shadow(0 12px 20px rgba(0,0,0,.55)) saturate(0.95); }
+  .mood-cool .dragon-art{ filter:drop-shadow(0 12px 20px rgba(0,0,0,.55)) saturate(0.62) brightness(0.92); }
+  .mood-distant .dragon-art{ filter:drop-shadow(0 12px 20px rgba(0,0,0,.55)) saturate(0.42) brightness(0.82); }
+  .mood-hurt .dragon-art{ filter:drop-shadow(0 12px 20px rgba(0,0,0,.55)) saturate(0.25) brightness(0.72); }
+
+  .reaction{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%);
+    background:rgba(18,14,42,0.9);
+    border:1px solid var(--panel-border);
+    padding:9px 16px; border-radius:16px;
+    font-size:13.5px; color:var(--ink); font-style:italic;
+    opacity:0; transition:opacity .35s ease, transform .35s ease;
+    pointer-events:none; max-width:86%; text-align:center; z-index:5;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .reaction.show{ opacity:1; transform:translateX(-50%) translateY(5px); }
 
   .stage-caption{
     position:absolute; left:0; right:0; bottom:10px; text-align:center;
@@ -97,7 +115,6 @@
   /* ---------- Header / identity ---------- */
   .titlebar{ display:flex; align-items:baseline; justify-content:space-between; margin:16px 2px 10px; }
   h1{ font-size:26px; margin:0; letter-spacing:.02em; color:var(--gold); font-weight:600; }
-  .stagepill{ font-size:12px; color:var(--ink-dim); }
   .settings-btn{
     background:none;border:none;color:var(--ink-dim);font-size:18px;cursor:pointer;padding:4px 8px;
   }
@@ -124,7 +141,7 @@
     transition:transform .15s ease, background .2s ease;
   }
   button.act:hover:not(:disabled){ transform:translateY(-1px); background:linear-gradient(180deg, rgba(100,75,170,0.5), rgba(50,38,95,0.5)); }
-  button.act:disabled{ opacity:0.38; cursor:default; }
+  button.act:disabled{ opacity:0.45; cursor:default; }
 
   .foods{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:18px; }
   .food-btn{
@@ -137,8 +154,10 @@
     color:var(--ink);
     cursor:pointer;
     font-size:13px;
+    transition:transform .12s ease, background .2s ease;
   }
   .food-btn:hover{ background:rgba(60,45,110,0.5); }
+  .food-btn:active{ transform:scale(0.97); }
   .food-btn .name{ display:block; font-weight:600; margin-bottom:2px;}
   .food-btn .desc{ display:block; color:var(--ink-dim); font-size:11.5px;}
 
@@ -161,6 +180,8 @@
   .entry .text{ font-size:14px; line-height:1.55; }
   .entry.milestone .text{ color:var(--gold); }
   .entry.secret .text{ color:#e0b8ff; font-style:italic; }
+  .entry.new{ animation:entryIn .8s ease; }
+  @keyframes entryIn{ from{ background:rgba(183,155,255,0.14);} to{ background:transparent;} }
 
   /* ---------- Onboarding ---------- */
   .overlay{
@@ -197,6 +218,7 @@
     <div class="stars" id="stars"></div>
     <div class="mountains"></div>
     <div class="dragon-wrap" id="dragonWrap"></div>
+    <div class="reaction" id="reaction"></div>
     <div class="stage-caption" id="stageCaption"></div>
   </div>
 
@@ -214,8 +236,8 @@
 
   <div class="actions hidden" id="ritualActions">
     <div class="row2">
-      <button class="act" id="morningBtn">🌅 Ranné privítanie</button>
-      <button class="act" id="eveningBtn">🌙 Večerné uloženie</button>
+      <button class="act" id="morningBtn"></button>
+      <button class="act" id="eveningBtn"></button>
     </div>
   </div>
 
@@ -279,6 +301,13 @@ const FOODS = [
    line:"ponúkla si mu kryštálovú rosu"},
   {id:"shadow_herb", name:"tieňová bylina", icon:"🌿", desc:"horká, ale upokojuje ho pred spaním",
    line:"pridala si mu do misky tieňovú bylinu"},
+];
+
+const FEED_REACTIONS = [
+  "Kaelith si oblizol papuľu a spokojne zavrčal.",
+  "Kaelith zamrmlal od radosti a švihol chvostom.",
+  "Kaelithove oči sa rozžiarili. Chutilo mu.",
+  "Kaelith sa oprel hlavou o tvoju dlaň. Ďakuje ti."
 ];
 
 const SECRETS = [
@@ -409,6 +438,20 @@ function maybeEvolve(){
   }
 }
 
+/* ---------------- visible reaction ---------------- */
+let reactionTimer = null;
+function showReaction(text){
+  const el = document.getElementById("reaction");
+  el.textContent = text;
+  el.classList.add("show");
+  const wrap = document.getElementById("dragonWrap");
+  wrap.classList.remove("react");
+  void wrap.offsetWidth; /* restart animation */
+  wrap.classList.add("react");
+  clearTimeout(reactionTimer);
+  reactionTimer = setTimeout(()=>{ el.classList.remove("show"); }, 3000);
+}
+
 /* ---------------- registering an action (feed / ritual / warm egg) ---------------- */
 function registerAction(kindLabel, doneText){
   const today = todayStr();
@@ -441,6 +484,8 @@ function registerAction(kindLabel, doneText){
     }
   }
 
+  state.lastActionDate = today;
+
   if(isFirstToday){
     state.distinctActionDays.push(today);
     if(!state.milestones.thirtyDays && state.distinctActionDays.length>=30){
@@ -462,101 +507,253 @@ function registerAction(kindLabel, doneText){
   render();
 }
 
-/* ---------------- dragon SVG art ---------------- */
-function dragonSVG(stage){
-  const defs = `
+/* ---------------- dragon SVG art ----------------
+   Painted-style sapphire dragon with galaxy wings,
+   inspired by the reference artwork. */
+
+const SVG_DEFS = `
   <defs>
-    <linearGradient id="scaleGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="var(--scale-b)"/>
-      <stop offset="100%" stop-color="var(--scale-a)"/>
+    <linearGradient id="bodyG" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#4a63d0"/>
+      <stop offset="40%" stop-color="#22348c"/>
+      <stop offset="100%" stop-color="#0d1445"/>
     </linearGradient>
-    <linearGradient id="wingGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="var(--wing-a)"/>
-      <stop offset="100%" stop-color="var(--wing-b)"/>
+    <linearGradient id="bodyG2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a74e8"/>
+      <stop offset="100%" stop-color="#16205c"/>
     </linearGradient>
-    <radialGradient id="eggGrad" cx="35%" cy="30%" r="80%">
+    <linearGradient id="bellyG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#93a9ee"/>
+      <stop offset="100%" stop-color="#3d5099"/>
+    </linearGradient>
+    <radialGradient id="wingG" cx="45%" cy="30%" r="90%">
+      <stop offset="0%" stop-color="#4a5fe0"/>
+      <stop offset="38%" stop-color="#7038d0"/>
+      <stop offset="72%" stop-color="#b44fd8"/>
+      <stop offset="100%" stop-color="#2a1a60"/>
+    </radialGradient>
+    <linearGradient id="hornG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eef2fc"/>
+      <stop offset="100%" stop-color="#8d9ac2"/>
+    </linearGradient>
+    <radialGradient id="eggG" cx="35%" cy="30%" r="80%">
       <stop offset="0%" stop-color="#3a4f96"/>
       <stop offset="100%" stop-color="#1c1638"/>
     </radialGradient>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>`;
 
+/* stars sprinkled inside wing membranes */
+function wingStars(pts){
+  return pts.map(([x,y,r,o])=>
+    `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity="${o}"/>`).join("");
+}
+
+/* The adult dragon body — shared by "young" and "full" stages.
+   Facing left, S-curved neck, big galaxy wings, curled tail. */
+function adultDragon(opts){
+  const s = opts.scale;
+  const tx = 150*(1-s), ty = 300*(1-s);
+  const gems = opts.gems ? `
+    <g filter="url(#glow)">
+      <polygon points="139,148 145,156 139,164 133,156" fill="#8fd8ff"/>
+      <polygon points="141,168 146,175 141,182 136,175" fill="#a89aff"/>
+      <polygon points="142,187 146,193 142,199 138,193" fill="#8fd8ff" opacity="0.9"/>
+    </g>` : "";
+  const crest = opts.fullCrest ? `
+    <path d="M128 56 C140 40 154 32 170 28 C158 42 148 52 140 62 Z" fill="url(#hornG)"/>
+    <path d="M120 52 C128 38 138 30 150 24 C142 38 134 48 128 58 Z" fill="url(#hornG)" opacity="0.85"/>` : "";
+  const eyeGlowR = opts.fullCrest ? 6.5 : 5.5;
+
+  return `<g transform="translate(${tx} ${ty}) scale(${s})">
+
+    <!-- right (far) wing -->
+    <g opacity="0.88">
+      <path d="M158 160
+        C 186 122 214 86 250 52
+        C 256 82 264 110 272 138
+        Q 250 148 246 176
+        Q 222 178 210 204
+        Q 186 200 162 208 Z" fill="url(#wingG)"/>
+      <path d="M162 156 L250 52 M164 162 L272 138 M164 168 L246 176 M162 176 L210 204"
+        stroke="#231352" stroke-width="3" opacity="0.55" fill="none"/>
+      ${wingStars([[236,96,1.3,.8],[222,128,1.1,.7],[248,150,1.2,.6],[204,164,1,.65],[232,120,0.8,.9]])}
+    </g>
+
+    <!-- left (near) wing -->
+    <g>
+      <path d="M146 160
+        C 118 120 88 82 50 48
+        C 44 80 36 110 26 140
+        Q 50 150 54 180
+        Q 80 182 92 210
+        Q 118 204 144 210 Z" fill="url(#wingG)"/>
+      <path d="M142 154 L50 48 M140 162 L26 140 M140 170 L54 180 M142 180 L92 210"
+        stroke="#231352" stroke-width="3.5" opacity="0.6" fill="none"/>
+      <path d="M50 48 L42 36 L56 44 Z" fill="url(#hornG)"/>
+      ${wingStars([[66,96,1.4,.85],[84,130,1.2,.7],[58,150,1.3,.65],[100,166,1.1,.7],[76,112,0.9,.9],[92,146,0.8,.8]])}
+    </g>
+
+    <!-- tail: curls left and under -->
+    <path d="M150 216 C 122 238 92 240 76 258 C 64 272 74 290 98 292 C 126 294 152 286 162 270"
+      stroke="url(#bodyG2)" stroke-width="22" fill="none" stroke-linecap="round"/>
+    <path d="M98 292 C 126 294 152 286 162 270" stroke="url(#bodyG2)" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <!-- tail fin -->
+    <g>
+      <polygon points="156,262 190,250 170,272 184,276 158,284" fill="url(#wingG)"/>
+    </g>
+    <!-- tail spikes -->
+    <polygon points="96,238 88,228 104,230" fill="#1a2668"/>
+    <polygon points="74,262 64,254 78,252" fill="#1a2668"/>
+
+    <!-- body -->
+    <path d="M84 86
+      C 98 68 118 60 134 64
+      C 150 70 156 86 158 102
+      C 164 128 170 152 172 182
+      C 174 212 166 230 150 238
+      C 130 246 112 240 108 224
+      C 104 208 116 198 128 196
+      C 136 194 142 198 144 204
+      C 150 196 148 178 144 160
+      C 138 134 128 112 118 98
+      C 110 88 96 88 84 86 Z" fill="url(#bodyG)"/>
+
+    <!-- haunch -->
+    <ellipse cx="146" cy="210" rx="30" ry="26" fill="url(#bodyG2)"/>
+    <ellipse cx="146" cy="210" rx="30" ry="26" fill="none" stroke="#0c1240" stroke-width="1.5" opacity="0.5"/>
+
+    <!-- legs -->
+    <path d="M132 226 C 128 242 126 252 128 260" stroke="url(#bodyG2)" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <path d="M158 228 C 158 244 156 254 158 262" stroke="url(#bodyG2)" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <!-- claws -->
+    <path d="M122 260 L118 268 M128 262 L126 270 M134 261 L134 269" stroke="url(#hornG)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M152 262 L148 270 M158 264 L157 272 M164 262 L164 270" stroke="url(#hornG)" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- foreleg tucked -->
+    <path d="M136 160 C 128 172 124 182 126 190" stroke="url(#bodyG)" stroke-width="11" fill="none" stroke-linecap="round"/>
+    <path d="M120 188 L116 196 M126 191 L124 199 M131 190 L131 198" stroke="url(#hornG)" stroke-width="2.6" stroke-linecap="round"/>
+
+    <!-- belly ridge -->
+    <path d="M118 104 C 130 130 140 158 146 186 C 149 200 150 212 148 222"
+      stroke="url(#bellyG)" stroke-width="11" fill="none" stroke-linecap="round" opacity="0.9"/>
+    <path d="M121 116 L133 112 M127 132 L139 128 M132 148 L144 144 M137 164 L148 160 M141 180 L151 177 M144 196 L153 194"
+      stroke="#1b2a6e" stroke-width="1.6" opacity="0.7"/>
+
+    <!-- scale hints -->
+    <path d="M150 120 q6 4 4 12 M158 140 q6 4 4 12 M164 164 q5 4 4 11 M166 188 q4 4 3 10"
+      stroke="#6f86e8" stroke-width="1.4" fill="none" opacity="0.35"/>
+
+    <!-- back spikes -->
+    <polygon points="152,92 164,80 160,100" fill="#18246a"/>
+    <polygon points="160,112 172,102 168,122" fill="#18246a"/>
+    <polygon points="166,136 178,128 174,146" fill="#18246a"/>
+    <polygon points="170,162 182,156 178,172" fill="#18246a"/>
+    <polygon points="172,190 184,186 178,200" fill="#18246a"/>
+
+    ${gems}
+
+    <!-- head -->
+    <path d="M74 88
+      C 84 74 100 64 118 62
+      C 134 60 146 68 148 82
+      C 150 94 144 102 132 106
+      C 118 110 100 106 88 100
+      C 80 96 76 92 74 88 Z" fill="url(#bodyG2)"/>
+    <!-- jaw -->
+    <path d="M74 88 C 84 96 98 102 112 104 C 102 110 88 108 78 100 C 74 96 73 92 74 88 Z" fill="#16205c"/>
+    <!-- horns -->
+    <path d="M130 64 C148 46 168 36 190 30 C176 46 160 58 146 70 Z" fill="url(#hornG)"/>
+    <path d="M138 74 C154 62 170 54 186 50 C174 62 160 72 148 80 Z" fill="url(#hornG)" opacity="0.9"/>
+    ${crest}
+    <!-- cheek frill -->
+    <polygon points="140,88 156,84 146,96" fill="#18246a"/>
+    <polygon points="136,98 152,98 142,108" fill="#18246a"/>
+    <!-- eye -->
+    <g class="eye-glow" filter="url(#glow)">
+      <ellipse cx="106" cy="82" rx="${eyeGlowR}" ry="${eyeGlowR*0.72}" fill="#6fe6ff" opacity="0.9"/>
+    </g>
+    <g class="eyes">
+      <ellipse class="eye" cx="106" cy="82" rx="5" ry="3.6" fill="#bff2ff"/>
+      <ellipse cx="106" cy="82" rx="1.6" ry="3" fill="#0a2a4a"/>
+    </g>
+    <!-- nostril + mouth -->
+    <circle cx="80" cy="85" r="1.6" fill="#0b1140"/>
+    <path d="M76 91 C 86 97 98 100 110 101" stroke="#0b1140" stroke-width="1.6" fill="none" opacity="0.8"/>
+  </g>`;
+}
+
+function dragonSVG(stage){
   if(stage==="egg"){
-    return `<svg viewBox="0 0 300 300" class="dragon-art stage-egg">${defs}
-      <ellipse cx="150" cy="200" rx="72" ry="92" fill="url(#eggGrad)" stroke="#3a2f5c" stroke-width="4"/>
-      <circle cx="118" cy="150" r="5" fill="#9d8cf0" opacity="0.55"/>
-      <circle cx="175" cy="185" r="4" fill="#9d8cf0" opacity="0.45"/>
-      <circle cx="140" cy="230" r="3.5" fill="#9d8cf0" opacity="0.4"/>
-      <path d="M138 118 L150 140 L136 160 L152 178" stroke="#ffe9a8" stroke-width="3" fill="none" opacity="0.75" stroke-linecap="round"/>
+    return `<svg viewBox="0 0 300 300" class="dragon-art stage-egg">${SVG_DEFS}
+      <ellipse cx="150" cy="205" rx="70" ry="90" fill="url(#eggG)" stroke="#3a2f5c" stroke-width="4"/>
+      <circle cx="118" cy="155" r="5" fill="#9d8cf0" opacity="0.55" filter="url(#glow)"/>
+      <circle cx="175" cy="190" r="4" fill="#9d8cf0" opacity="0.45"/>
+      <circle cx="140" cy="235" r="3.5" fill="#9d8cf0" opacity="0.4"/>
+      <circle cx="163" cy="140" r="2.5" fill="#c9b6ff" opacity="0.6"/>
+      <path d="M138 123 L150 145 L136 165 L152 183" stroke="#ffe9a8" stroke-width="3" fill="none" opacity="0.75" stroke-linecap="round"/>
     </svg>`;
   }
 
   if(stage==="hatchling"){
-    return `<svg viewBox="0 0 300 300" class="dragon-art stage-hatchling">${defs}
-      <ellipse cx="150" cy="235" rx="14" ry="26" fill="url(#wingGrad)" opacity="0.85"/>
-      <path d="M160 220 C 90 210, 70 170, 95 140 C 110 165, 130 175, 150 190 Z" fill="url(#wingGrad)"/>
-      <path d="M140 220 C 210 210, 230 170, 205 140 C 190 165, 170 175, 150 190 Z" fill="url(#wingGrad)"/>
-      <ellipse cx="150" cy="205" rx="46" ry="40" fill="url(#scaleGrad)"/>
-      <ellipse cx="150" cy="222" rx="24" ry="16" fill="#cbd9ff" opacity="0.25"/>
-      <circle cx="150" cy="150" r="34" fill="url(#scaleGrad)"/>
-      <path d="M130 128 L136 108 L142 130 Z" fill="#e8e2d0"/>
-      <path d="M170 128 L164 108 L158 130 Z" fill="#e8e2d0"/>
-      <g class="eyes">
-        <ellipse class="eye" cx="137" cy="148" rx="6" ry="7" fill="#c9b6ff"/>
-        <ellipse class="eye" cx="163" cy="148" rx="6" ry="7" fill="#c9b6ff"/>
+    return `<svg viewBox="0 0 300 300" class="dragon-art stage-hatchling">${SVG_DEFS}
+      <!-- baby galaxy wings -->
+      <g opacity="0.95">
+        <path d="M162 200 C 200 180 216 150 210 122 Q 196 140 184 150 Q 190 166 176 172 Q 180 186 164 190 Z" fill="url(#wingG)"/>
+        <path d="M164 196 L210 122 M166 198 L184 150 M166 200 L176 172" stroke="#231352" stroke-width="2.5" opacity="0.55" fill="none"/>
+        ${wingStars([[196,146,1.1,.8],[186,166,0.9,.7]])}
+        <path d="M138 200 C 100 180 84 150 90 122 Q 104 140 116 150 Q 110 166 124 172 Q 120 186 136 190 Z" fill="url(#wingG)"/>
+        <path d="M136 196 L90 122 M134 198 L116 150 M134 200 L124 172" stroke="#231352" stroke-width="2.5" opacity="0.55" fill="none"/>
+        ${wingStars([[104,146,1.1,.8],[114,166,0.9,.7]])}
       </g>
-      <path d="M175 210 Q 200 230 190 250 Q 182 238 168 232" stroke="url(#scaleGrad)" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <!-- tail -->
+      <path d="M172 226 Q 206 240 200 264 Q 190 252 172 248" stroke="url(#bodyG2)" stroke-width="11" fill="none" stroke-linecap="round"/>
+      <polygon points="196,258 214,254 202,270" fill="url(#wingG)"/>
+      <!-- body -->
+      <ellipse cx="150" cy="216" rx="44" ry="38" fill="url(#bodyG)"/>
+      <ellipse cx="150" cy="230" rx="24" ry="17" fill="url(#bellyG)" opacity="0.85"/>
+      <path d="M140 220 L160 220 M138 228 L162 228 M140 236 L160 236" stroke="#1b2a6e" stroke-width="1.5" opacity="0.6"/>
+      <!-- feet -->
+      <ellipse cx="132" cy="250" rx="10" ry="6" fill="#16205c"/>
+      <ellipse cx="168" cy="250" rx="10" ry="6" fill="#16205c"/>
+      <!-- head -->
+      <circle cx="150" cy="158" r="37" fill="url(#bodyG2)"/>
+      <!-- horn nubs -->
+      <path d="M128 132 L132 110 L142 130 Z" fill="url(#hornG)"/>
+      <path d="M172 132 L168 110 L158 130 Z" fill="url(#hornG)"/>
+      <!-- tiny back spikes -->
+      <polygon points="146,122 150,112 154,122" fill="#18246a"/>
+      <!-- eyes -->
+      <g class="eye-glow" filter="url(#glow)">
+        <ellipse cx="136" cy="156" rx="7" ry="8" fill="#b9a6ff" opacity="0.8"/>
+        <ellipse cx="164" cy="156" rx="7" ry="8" fill="#b9a6ff" opacity="0.8"/>
+      </g>
+      <g class="eyes">
+        <ellipse class="eye" cx="136" cy="156" rx="6.5" ry="7.5" fill="#dcd2ff"/>
+        <ellipse class="eye" cx="164" cy="156" rx="6.5" ry="7.5" fill="#dcd2ff"/>
+        <circle cx="136" cy="158" r="2.6" fill="#141a4a"/>
+        <circle cx="164" cy="158" r="2.6" fill="#141a4a"/>
+      </g>
+      <!-- snout -->
+      <ellipse cx="150" cy="172" rx="10" ry="6" fill="#3d54b8" opacity="0.8"/>
+      <circle cx="146" cy="171" r="1.2" fill="#0b1140"/>
+      <circle cx="154" cy="171" r="1.2" fill="#0b1140"/>
+      <!-- chest gem -->
+      <g filter="url(#glow)"><polygon points="150,214 154,220 150,226 146,220" fill="#8fd8ff"/></g>
     </svg>`;
   }
 
   if(stage==="young"){
-    return `<svg viewBox="0 0 300 300" class="dragon-art stage-young">${defs}
-      <ellipse cx="150" cy="255" rx="60" ry="10" fill="#000" opacity="0.25"/>
-      <path d="M155 205 C 60 190, 30 120, 65 80 C 85 120, 115 140, 150 165 Z" fill="url(#wingGrad)"/>
-      <path d="M145 205 C 240 190, 270 120, 235 80 C 215 120, 185 140, 150 165 Z" fill="url(#wingGrad)"/>
-      <path d="M150 165 L150 165" stroke="#fff" stroke-width="1"/>
-      <rect x="120" y="205" width="14" height="40" rx="6" fill="url(#scaleGrad)"/>
-      <rect x="166" y="205" width="14" height="40" rx="6" fill="url(#scaleGrad)"/>
-      <ellipse cx="150" cy="195" rx="60" ry="48" fill="url(#scaleGrad)"/>
-      <polygon points="140,150 150,135 160,150" fill="#e8e2d0"/>
-      <polygon points="150,145 160,128 170,145" fill="#e8e2d0"/>
-      <ellipse cx="150" cy="215" rx="30" ry="18" fill="#cbd9ff" opacity="0.22"/>
-      <circle cx="150" cy="130" r="36" fill="url(#scaleGrad)"/>
-      <path d="M124 105 L132 78 L140 108 Z" fill="#e8e2d0"/>
-      <path d="M176 105 L168 78 L160 108 Z" fill="#e8e2d0"/>
-      <g class="eyes">
-        <ellipse class="eye" cx="136" cy="128" rx="7" ry="8" fill="#c9b6ff"/>
-        <ellipse class="eye" cx="164" cy="128" rx="7" ry="8" fill="#c9b6ff"/>
-      </g>
-      <path d="M195 220 Q 235 235 225 265 Q 215 250 195 245" stroke="url(#scaleGrad)" stroke-width="12" fill="none" stroke-linecap="round"/>
-      <polygon points="222,262 233,268 224,272" fill="#e8e2d0"/>
+    return `<svg viewBox="0 0 300 300" class="dragon-art stage-young">${SVG_DEFS}
+      ${adultDragon({scale:0.82, gems:false, fullCrest:false})}
     </svg>`;
   }
 
-  return `<svg viewBox="0 0 300 300" class="dragon-art stage-full">${defs}
-    <ellipse cx="150" cy="265" rx="80" ry="10" fill="#000" opacity="0.3"/>
-    <path d="M160 195 C 40 190, -10 90, 45 35 C 65 90, 110 120, 155 150 Z" fill="url(#wingGrad)"/>
-    <path d="M140 195 C 260 190, 310 90, 255 35 C 235 90, 190 120, 145 150 Z" fill="url(#wingGrad)"/>
-    <path d="M60 90 L120 110" stroke="#fff" stroke-width="1" opacity="0.25"/>
-    <path d="M240 90 L180 110" stroke="#fff" stroke-width="1" opacity="0.25"/>
-    <circle cx="80" cy="70" r="1.6" fill="#fff" opacity="0.7"/>
-    <circle cx="220" cy="65" r="1.6" fill="#fff" opacity="0.7"/>
-    <circle cx="100" cy="50" r="1.4" fill="#fff" opacity="0.6"/>
-    <rect x="115" y="210" width="16" height="48" rx="7" fill="url(#scaleGrad)"/>
-    <rect x="169" y="210" width="16" height="48" rx="7" fill="url(#scaleGrad)"/>
-    <ellipse cx="150" cy="195" rx="66" ry="52" fill="url(#scaleGrad)"/>
-    <polygon points="130,140 140,118 150,140" fill="#e8e2d0"/>
-    <polygon points="150,135 160,110 170,135" fill="#e8e2d0"/>
-    <polygon points="170,140 180,120 188,140" fill="#e8e2d0"/>
-    <ellipse cx="150" cy="220" rx="34" ry="20" fill="#cbd9ff" opacity="0.22"/>
-    <circle cx="150" cy="118" r="40" fill="url(#scaleGrad)"/>
-    <path d="M118 88 L126 54 L138 92 Z" fill="#e8e2d0"/>
-    <path d="M182 88 L174 54 L162 92 Z" fill="#e8e2d0"/>
-    <g class="eyes">
-      <ellipse class="eye" cx="134" cy="116" rx="8" ry="9" fill="#e0d0ff"/>
-      <ellipse class="eye" cx="166" cy="116" rx="8" ry="9" fill="#e0d0ff"/>
-    </g>
-    <path d="M205 235 Q 260 250 250 285 Q 235 265 205 258" stroke="url(#scaleGrad)" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <polygon points="246,280 262,288 248,294" fill="#e8e2d0"/>
+  return `<svg viewBox="0 0 300 300" class="dragon-art stage-full">${SVG_DEFS}
+    ${adultDragon({scale:1, gems:true, fullCrest:true})}
   </svg>`;
 }
 
@@ -583,8 +780,9 @@ function render(){
   const mood = moodFor(gap);
 
   scene.className = "scene "+mood.cls;
-  const eyesHalf = (mood.cls==="mood-cool"||mood.cls==="mood-distant"||mood.cls==="mood-hurt") ? " eyes-halflid":"";
-  document.getElementById("dragonWrap").innerHTML = `<div class="${eyesHalf.trim()}">${dragonSVG(state.stage)}</div>`;
+  const eyesHalf = (mood.cls==="mood-cool"||mood.cls==="mood-distant"||mood.cls==="mood-hurt") ? "eyes-halflid":"";
+  document.getElementById("dragonWrap").innerHTML =
+    `<div class="dragon-inner ${eyesHalf}">${dragonSVG(state.stage)}</div>`;
   document.getElementById("stageCaption").textContent = STAGE_LABEL[state.stage];
 
   document.getElementById("moodLabel").textContent = mood.label;
@@ -602,6 +800,7 @@ function render(){
     pre.innerHTML = `<button class="act" id="warmEggBtn">🔥 Zahriať vajce svojím teplom</button>`;
     document.getElementById("warmEggBtn").onclick = ()=>{
       registerAction("egg", "Sadla si si k vajcu a zahriala ho dlaňami. Cítiš, ako sa vo vnútri niečo pohlo silnejšie než predtým.");
+      showReaction("Škrupina praská… Kaelith prichádza na svet!");
     };
   } else {
     pre.classList.add("hidden");
@@ -611,16 +810,22 @@ function render(){
     const today = todayStr();
     const morningBtn = document.getElementById("morningBtn");
     const eveningBtn = document.getElementById("eveningBtn");
-    morningBtn.disabled = state.morningDoneDate===today;
-    eveningBtn.disabled = state.eveningDoneDate===today;
+    const morningDone = state.morningDoneDate===today;
+    const eveningDone = state.eveningDoneDate===today;
+    morningBtn.disabled = morningDone;
+    eveningBtn.disabled = eveningDone;
+    morningBtn.textContent = morningDone ? "✓ Ráno hotové" : "🌅 Ranné privítanie";
+    eveningBtn.textContent = eveningDone ? "✓ Uložený na noc" : "🌙 Večerné uloženie";
 
     morningBtn.onclick = ()=>{
       state.morningDoneDate = today;
       registerAction("morning", "Ráno si prišla pozdraviť Kaelitha. Privítal ťa ospalým vrčaním a oprel si hlavu o tvoju dlaň.");
+      showReaction("Kaelith ti zamával krídlami na pozdrav.");
     };
     eveningBtn.onclick = ()=>{
       state.eveningDoneDate = today;
       registerAction("evening", "Večer si mu prišla zaželať dobrú noc. Kaelith sa stočil do klbka, spokojný, že si prišla, a pomaly zavrel oči.");
+      showReaction("Kaelith sa stočil do klbka a tíško pradie…");
     };
 
     foodsBox.innerHTML = FOODS.map(f=>`
@@ -640,14 +845,15 @@ function render(){
           saveState();
           render();
         }
+        showReaction(pick(FEED_REACTIONS));
       };
     });
   }
 
   // journal
   const journalBox = document.getElementById("journal");
-  journalBox.innerHTML = state.journal.map(e=>`
-    <div class="entry ${e.kind}">
+  journalBox.innerHTML = state.journal.map((e,i)=>`
+    <div class="entry ${e.kind}${i===0?" new":""}">
       <span class="date">${fmtDate(e.date)}</span>
       <span class="text">${e.text}</span>
     </div>`).join("");
